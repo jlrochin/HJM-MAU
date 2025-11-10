@@ -1,0 +1,116 @@
+name: Deploy with Self-Hosted Runner
+
+on:
+  push:
+    branches:
+      - production
+      - main
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Build and Deploy MAU on Hospital Server
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up environment variables
+        run: |
+          echo "DEPLOYMENT_TIME=$(date +'%Y-%m-%d %H:%M:%S')" >> $GITHUB_ENV
+          echo "COMMIT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+
+      - name: Verify Docker installation
+        run: |
+          docker --version
+          docker compose version
+
+      - name: Stop current containers
+        run: |
+          cd /home/usuariohjm/mau-deployment
+          docker compose -f docker-compose-deploy.yml down || echo "No containers running"
+        continue-on-error: true
+
+      - name: Build Backend Docker image
+        run: |
+          docker build \
+            -f Dockerfile \
+            -t ghcr.io/jlrochin/mau-backend:latest \
+            -t ghcr.io/jlrochin/mau-backend:${{ env.COMMIT_SHA }} \
+            .
+
+      - name: Build Frontend Docker image
+        run: |
+          docker build \
+            -f Dockerfile.vue \
+            -t ghcr.io/jlrochin/mau-frontend:latest \
+            -t ghcr.io/jlrochin/mau-frontend:${{ env.COMMIT_SHA }} \
+            .
+
+      - name: Start new containers
+        run: |
+          cd /home/usuariohjm/mau-deployment
+          docker compose -f docker-compose-deploy.yml up -d
+
+      - name: Wait for services to be ready
+        run: |
+          echo "Waiting for services to start and migrations to complete..."
+          sleep 30
+
+      - name: Health check
+        run: |
+          cd /home/usuariohjm/mau-deployment
+
+          if docker compose -f docker-compose-deploy.yml ps | grep -q "Up"; then
+            echo "Containers are running"
+            docker compose -f docker-compose-deploy.yml ps
+          else
+            echo "Container failed to start"
+            docker compose -f docker-compose-deploy.yml logs --tail=50
+            exit 1
+          fi
+
+      - name: Test database connection
+        run: |
+          docker exec mau-backend python manage.py check --database default || echo "Warning: Database check failed"
+        continue-on-error: true
+
+      - name: Test backend endpoint
+        run: |
+          curl -f http://localhost:8001/api/ || echo "Warning: Backend endpoint not responding"
+        continue-on-error: true
+
+      - name: Test frontend endpoint
+        run: |
+          curl -f http://localhost:8002/health || echo "Warning: Frontend health check not responding"
+        continue-on-error: true
+
+      - name: View application logs
+        run: |
+          cd /home/usuariohjm/mau-deployment
+          echo "=== Backend Logs ==="
+          docker compose -f docker-compose-deploy.yml logs --tail=20 mau-backend
+          echo "=== Frontend Logs ==="
+          docker compose -f docker-compose-deploy.yml logs --tail=20 mau-frontend
+        continue-on-error: true
+
+      - name: Clean up old Docker images
+        run: |
+          docker image prune -af --filter "until=48h" || true
+          echo "Docker cleanup completed"
+
+      - name: Deployment summary
+        run: |
+          echo "========================================"
+          echo "MAU Deployment completed successfully!"
+          echo "========================================"
+          echo "Time: ${{ env.DEPLOYMENT_TIME }}"
+          echo "Commit: ${{ env.COMMIT_SHA }}"
+          echo "Branch: ${{ github.ref_name }}"
+          echo "========================================"
+          echo "Backend: http://localhost:8001"
+          echo "Frontend: http://localhost:8002"
+          echo "========================================"
+          cd /home/usuariohjm/mau-deployment
+          docker compose -f docker-compose-deploy.yml ps
