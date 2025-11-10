@@ -1,0 +1,91 @@
+version: '3.8'
+
+services:
+  # PostgreSQL para MAU
+  mau-db:
+    image: postgres:16-alpine
+    container_name: mau-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME:-maudb}
+      POSTGRES_USER: ${DB_USER:-mau_user}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - mau-db-data:/var/lib/postgresql/data
+    networks:
+      - mau-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-mau_user}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Backend Django
+  mau-backend:
+    image: ghcr.io/jlrochin/mau-backend:latest
+    container_name: mau-backend
+    restart: unless-stopped
+    depends_on:
+      mau-db:
+        condition: service_healthy
+    environment:
+      - DATABASE_URL=postgresql://${DB_USER:-mau_user}:${DB_PASSWORD}@mau-db:5432/${DB_NAME:-maudb}
+      - DJANGO_ALLOWED_HOSTS=${DJANGO_ALLOWED_HOSTS:-*}
+      - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY}
+      - DJANGO_SETTINGS_MODULE=mau_hospital.settings
+      - DEBUG=False
+      - NODE_ENV=production
+    ports:
+      - "${BACKEND_PORT:-8001}:3000"
+    networks:
+      - mau-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+
+  # Frontend Vue.js
+  mau-frontend:
+    image: ghcr.io/jlrochin/mau-frontend:latest
+    container_name: mau-frontend
+    restart: unless-stopped
+    depends_on:
+      - mau-backend
+    ports:
+      - "${FRONTEND_PORT:-8002}:80"
+    networks:
+      - mau-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+
+  # Watchtower para auto-actualización
+  watchtower:
+    image: containrrr/watchtower
+    container_name: mau-watchtower
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - WATCHTOWER_CLEANUP=true
+      - WATCHTOWER_POLL_INTERVAL=60
+      - WATCHTOWER_ROLLING_RESTART=true
+    command: --interval 60 --cleanup --label-enable
+    networks:
+      - mau-network
+
+volumes:
+  mau-db-data:
+    driver: local
+
+networks:
+  mau-network:
+    driver: bridge
