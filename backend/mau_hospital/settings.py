@@ -27,12 +27,13 @@ SECRET_KEY = config('SECRET_KEY', default='django-insecure-change-me-in-producti
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', default=True, cast=bool)
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', '172.18.14.118', '0.0.0.0', 'mau-backend', 'cagpu-backend']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', '172.18.14.118', '172.18.50.89', '0.0.0.0', 'mau-backend', 'cagpu-backend']
 
 # Compatibilidad con Traefik/Proxy inverso y origen IP específico
 USE_X_FORWARDED_HOST = True
 CSRF_TRUSTED_ORIGINS = [
     'http://172.18.14.118',
+    'http://172.18.50.89',
 ]
 
 
