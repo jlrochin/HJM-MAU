@@ -11,9 +11,6 @@
     <!-- Contenido principal -->
     <router-view v-else />
 
-    <!-- Botón de theme -->
-    <ModeToggle v-if="!isInitializing" />
-
     <!-- Controlador de tours - Solo mostrar cuando el usuario esté autenticado -->
     <TourController
       v-if="!isInitializing && authStore.isAuthenticated"
@@ -36,15 +33,13 @@ import { useAuthStore } from '@/stores/auth'
 import { useToast } from 'vue-toastification'
 import TourController from '@/components/TourController.vue'
 import InactivityWarning from '@/components/InactivityWarning.vue'
-import ModeToggle from '@/components/ModeToggle.vue'
 import { useInactivityTimer } from '@/composables/useInactivityTimer'
 
 export default {
   name: 'App',
   components: {
     TourController,
-    InactivityWarning,
-    ModeToggle
+    InactivityWarning
   },
   setup() {
     const authStore = useAuthStore()
