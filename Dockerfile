@@ -13,7 +13,7 @@ RUN apt-get update \
 
 # Install Python deps
 COPY requirements.txt .
-RUN pip install --upgrade pip \
+RUN pip install --upgrade pip setuptools \
     && pip install -r requirements.txt \
     && pip install gunicorn psycopg2-binary
 
