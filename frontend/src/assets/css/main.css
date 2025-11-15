@@ -3,8 +3,83 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    --radius: 0.625rem;
+    --background: oklch(1 0 0);
+    --foreground: oklch(0.145 0 0);
+    --card: oklch(1 0 0);
+    --card-foreground: oklch(0.145 0 0);
+    --popover: oklch(1 0 0);
+    --popover-foreground: oklch(0.145 0 0);
+    --primary: oklch(0.205 0 0);
+    --primary-foreground: oklch(0.985 0 0);
+    --secondary: oklch(0.97 0 0);
+    --secondary-foreground: oklch(0.205 0 0);
+    --muted: oklch(0.97 0 0);
+    --muted-foreground: oklch(0.556 0 0);
+    --accent: oklch(0.97 0 0);
+    --accent-foreground: oklch(0.205 0 0);
+    --destructive: oklch(0.577 0.245 27.325);
+    --border: oklch(0.922 0 0);
+    --input: oklch(0.922 0 0);
+    --ring: oklch(0.708 0 0);
+    --chart-1: oklch(0.646 0.222 41.116);
+    --chart-2: oklch(0.6 0.118 184.704);
+    --chart-3: oklch(0.398 0.07 227.392);
+    --chart-4: oklch(0.828 0.189 84.429);
+    --chart-5: oklch(0.769 0.188 70.08);
+    --sidebar: oklch(0.985 0 0);
+    --sidebar-foreground: oklch(0.145 0 0);
+    --sidebar-primary: oklch(0.205 0 0);
+    --sidebar-primary-foreground: oklch(0.985 0 0);
+    --sidebar-accent: oklch(0.97 0 0);
+    --sidebar-accent-foreground: oklch(0.205 0 0);
+    --sidebar-border: oklch(0.922 0 0);
+    --sidebar-ring: oklch(0.708 0 0);
+  }
+
+  .dark {
+    --background: #0a0a0a;
+    --foreground: #fafafa;
+    --card: #141414;
+    --card-foreground: #fafafa;
+    --popover: #141414;
+    --popover-foreground: #fafafa;
+    --primary: #fafafa;
+    --primary-foreground: #0a0a0a;
+    --secondary: #262626;
+    --secondary-foreground: #fafafa;
+    --muted: #262626;
+    --muted-foreground: #a1a1a1;
+    --accent: #262626;
+    --accent-foreground: #fafafa;
+    --destructive: #ef4444;
+    --border: #262626;
+    --input: #1f1f1f;
+    --ring: #737373;
+    --chart-1: oklch(0.488 0.243 264.376);
+    --chart-2: oklch(0.696 0.17 162.48);
+    --chart-3: oklch(0.769 0.188 70.08);
+    --chart-4: oklch(0.627 0.265 303.9);
+    --chart-5: oklch(0.645 0.246 16.439);
+    --sidebar: #141414;
+    --sidebar-foreground: #fafafa;
+    --sidebar-primary: oklch(0.488 0.243 264.376);
+    --sidebar-primary-foreground: #fafafa;
+    --sidebar-accent: #262626;
+    --sidebar-accent-foreground: #fafafa;
+    --sidebar-border: #262626;
+    --sidebar-ring: #737373;
+  }
+
+  * {
+    border-color: var(--border);
+  }
+
   body {
-    @apply bg-background-main font-sans;
+    background-color: var(--background);
+    color: var(--foreground);
+    @apply font-sans transition-colors duration-300;
   }
 
   h1,
@@ -13,7 +88,7 @@
   h4,
   h5,
   h6 {
-    @apply text-secondary-900;
+    color: var(--foreground);
   }
 }
 
@@ -37,11 +112,15 @@
 
   /* Tarjetas */
   .card {
-    @apply bg-background-card rounded-xl shadow-lg border border-gray-100;
+    background-color: var(--card);
+    color: var(--card-foreground);
+    @apply rounded-xl shadow-lg border transition-colors duration-300;
+    border-color: var(--border);
   }
 
   .card-header {
-    @apply px-6 py-4 border-b border-gray-100;
+    @apply px-6 py-4 border-b;
+    border-color: var(--border);
   }
 
   .card-body {
@@ -50,11 +129,11 @@
 
   /* Formularios */
   .form-input {
-    @apply w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-600 focus:border-primary-600 transition-colors duration-200;
+    @apply w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-600 focus:border-primary-600 transition-colors duration-200 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100;
   }
 
   .form-label {
-    @apply block text-sm font-medium text-secondary-900 mb-1;
+    @apply block text-sm font-medium text-secondary-900 mb-1 dark:text-gray-200;
   }
 
   .form-error {
@@ -89,7 +168,9 @@
 
   /* Navegación sticky */
   .sticky-header {
-    @apply sticky top-0 z-40 bg-background-card border-b border-gray-200;
+    background-color: var(--card);
+    border-color: var(--border);
+    @apply sticky top-0 z-40 border-b transition-colors duration-300;
   }
 
   /* Contenido scrolleable */

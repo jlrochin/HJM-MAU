@@ -1,0 +1,60 @@
+version: "3.9"
+
+services:
+  postgres-mau:
+    image: postgres:16-alpine
+    container_name: mau-postgres-local
+    environment:
+      POSTGRES_DB: maudb
+      POSTGRES_USER: mau_user
+      POSTGRES_PASSWORD: mau_local_password_123
+    ports:
+      - "5433:5432"
+    volumes:
+      - mau_pgdata_local:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mau_user -d maudb"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  mau-backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: mau-backend-local
+    depends_on:
+      postgres-mau:
+        condition: service_healthy
+    environment:
+      DB_NAME: maudb
+      DB_USER: mau_user
+      DB_PASSWORD: mau_local_password_123
+      DB_HOST: postgres-mau
+      DB_PORT: 5432
+      SECRET_KEY: django-insecure-local-dev-key-change-in-production
+      DEBUG: "True"
+      DJANGO_SETTINGS_MODULE: mau_hospital.settings
+    ports:
+      - "8000:3000"
+    volumes:
+      - ./backend:/app
+    command: sh -c "python manage.py migrate && python manage.py runserver 0.0.0.0:3000"
+
+  mau-frontend:
+    build:
+      context: ./frontend
+      dockerfile: ../Dockerfile.vue
+    container_name: mau-frontend-local
+    environment:
+      NODE_ENV: development
+    ports:
+      - "3001:80"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - mau-backend
+
+volumes:
+  mau_pgdata_local:

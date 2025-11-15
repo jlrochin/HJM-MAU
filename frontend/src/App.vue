@@ -1,18 +1,21 @@
 <template>
-  <div id="app" class="min-h-screen bg-background-main">
+  <div id="app" class="min-h-screen bg-background text-foreground">
     <!-- Loading spinner mientras se inicializa la autenticación -->
-    <div v-if="isInitializing" class="fixed inset-0 bg-white bg-opacity-90 flex items-center justify-center z-50">
+    <div v-if="isInitializing" class="fixed inset-0 bg-white dark:bg-gray-900 bg-opacity-90 flex items-center justify-center z-50">
       <div class="text-center">
         <div class="animate-spin rounded-full h-16 w-16 border-b-2 border-primary-600 mx-auto mb-4"></div>
-        <p class="text-secondary-600">Inicializando aplicación...</p>
+        <p class="text-secondary-600 dark:text-gray-300">Inicializando aplicación...</p>
       </div>
     </div>
-    
+
     <!-- Contenido principal -->
     <router-view v-else />
 
+    <!-- Botón de theme -->
+    <ModeToggle v-if="!isInitializing" />
+
     <!-- Controlador de tours - Solo mostrar cuando el usuario esté autenticado -->
-    <TourController 
+    <TourController
       v-if="!isInitializing && authStore.isAuthenticated"
       :auto-start-welcome="true"
       :show-button="true"
@@ -33,13 +36,15 @@ import { useAuthStore } from '@/stores/auth'
 import { useToast } from 'vue-toastification'
 import TourController from '@/components/TourController.vue'
 import InactivityWarning from '@/components/InactivityWarning.vue'
+import ModeToggle from '@/components/ModeToggle.vue'
 import { useInactivityTimer } from '@/composables/useInactivityTimer'
 
 export default {
   name: 'App',
   components: {
     TourController,
-    InactivityWarning
+    InactivityWarning,
+    ModeToggle
   },
   setup() {
     const authStore = useAuthStore()

@@ -1,98 +1,86 @@
 <template>
-  <div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-background-main to-gray-200">
-    <div class="max-w-md w-full space-y-8">
-      <div class="card">
-        <div class="card-header text-center">
-          <h2 class="text-3xl font-bold text-secondary-900">
+  <div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-muted transition-colors">
+    <div class="max-w-md w-full px-4">
+      <Card>
+        <CardHeader class="text-center">
+          <div class="flex items-center justify-center mb-4">
+            <Hospital class="w-12 h-12 text-primary" />
+          </div>
+          <h2 class="text-3xl font-bold text-foreground">
             MAU Hospital
           </h2>
-          <p class="mt-2 text-sm text-secondary-600">
+          <p class="mt-2 text-sm text-muted-foreground">
             Sistema de Gestión de Recetas
           </p>
-        </div>
-        
-        <div class="card-body">
+        </CardHeader>
+
+        <CardContent>
           <form @submit.prevent="handleSubmit" class="space-y-6">
-            <div>
-              <label for="username" class="form-label">
-                Usuario
-              </label>
-              <input
+            <div class="space-y-2">
+              <Label for="username">
+                <div class="flex items-center gap-2">
+                  <User class="w-4 h-4" />
+                  Usuario
+                </div>
+              </Label>
+              <Input
                 id="username"
                 v-model="form.username"
                 type="text"
-                required
-                class="form-input"
                 placeholder="Ingresa tu usuario"
                 :disabled="isLoading"
+                :error="!!errors.username"
               />
-              <p v-if="errors.username" class="form-error">
+              <p v-if="errors.username" class="text-sm text-destructive mt-1">
                 {{ errors.username }}
               </p>
             </div>
 
-            <div>
-              <label for="password" class="form-label">
-                Contraseña
-              </label>
-              <input
+            <div class="space-y-2">
+              <Label for="password">
+                <div class="flex items-center gap-2">
+                  <Lock class="w-4 h-4" />
+                  Contraseña
+                </div>
+              </Label>
+              <Input
                 id="password"
                 v-model="form.password"
                 type="password"
-                required
-                class="form-input"
                 placeholder="Ingresa tu contraseña"
                 :disabled="isLoading"
+                :error="!!errors.password"
               />
-              <p v-if="errors.password" class="form-error">
+              <p v-if="errors.password" class="text-sm text-destructive mt-1">
                 {{ errors.password }}
               </p>
             </div>
 
-            <!-- reCAPTCHA eliminado -->
-
-            <div v-if="loginError" class="text-center">
-              <p class="form-error">{{ loginError }}</p>
+            <div v-if="loginError" class="rounded-lg bg-destructive/10 border border-destructive/20 p-3">
+              <div class="flex items-center gap-2">
+                <AlertCircle class="w-4 h-4 text-destructive" />
+                <p class="text-sm text-destructive">{{ loginError }}</p>
+              </div>
             </div>
 
-            <button
+            <Button
               type="submit"
               :disabled="isLoading"
-              class="btn-primary w-full flex items-center justify-center"
-              :class="{ 'opacity-50 cursor-not-allowed': isLoading }"
+              class="w-full"
             >
-              <svg
-                v-if="isLoading"
-                class="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-              >
-                <circle
-                  class="opacity-25"
-                  cx="12"
-                  cy="12"
-                  r="10"
-                  stroke="currentColor"
-                  stroke-width="4"
-                ></circle>
-                <path
-                  class="opacity-75"
-                  fill="currentColor"
-                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                ></path>
-              </svg>
+              <Loader2 v-if="isLoading" class="w-4 h-4 mr-2 animate-spin" />
+              <LogIn v-else class="w-4 h-4 mr-2" />
               {{ isLoading ? 'Iniciando sesión...' : 'Iniciar Sesión' }}
-            </button>
+            </Button>
           </form>
-          
+
           <div class="mt-6 text-center">
-            <p class="text-xs text-secondary-600">
+            <p class="text-xs text-muted-foreground">
               Sistema desarrollado para MAU Hospital
             </p>
           </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
     </div>
   </div>
 </template>
@@ -102,10 +90,30 @@ import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useToast } from 'vue-toastification'
+import { Hospital, User, Lock, LogIn, Loader2, AlertCircle } from 'lucide-vue-next'
+import Card from '@/components/ui/Card.vue'
+import CardHeader from '@/components/ui/CardHeader.vue'
+import CardContent from '@/components/ui/CardContent.vue'
+import Button from '@/components/ui/Button.vue'
+import Input from '@/components/ui/Input.vue'
+import Label from '@/components/ui/Label.vue'
 
 export default {
   name: 'Login',
-  components: {},
+  components: {
+    Card,
+    CardHeader,
+    CardContent,
+    Button,
+    Input,
+    Label,
+    Hospital,
+    User,
+    Lock,
+    LogIn,
+    Loader2,
+    AlertCircle
+  },
   setup() {
     const router = useRouter()
     const authStore = useAuthStore()
