@@ -24,12 +24,23 @@ jobs:
       - name: Verify Docker installation
         run: |
           docker --version
-          docker compose version
+          if command -v docker-compose &> /dev/null; then
+            echo "Using docker-compose (hyphenated)"
+            docker-compose --version
+            echo "DOCKER_COMPOSE_CMD=docker-compose" >> $GITHUB_ENV
+          elif docker compose version &> /dev/null; then
+            echo "Using docker compose (plugin)"
+            docker compose version
+            echo "DOCKER_COMPOSE_CMD=docker compose" >> $GITHUB_ENV
+          else
+            echo "Error: Neither docker-compose nor docker compose found"
+            exit 1
+          fi
 
       - name: Stop current containers
         run: |
           cd /home/usuariohjm/mau-deployment
-          docker compose -f docker-compose-deploy.yml down || echo "No containers running"
+          ${{ env.DOCKER_COMPOSE_CMD }} -f docker-compose-deploy.yml down || echo "No containers running"
         continue-on-error: true
 
       - name: Build Backend Docker image
@@ -51,7 +62,7 @@ jobs:
       - name: Start new containers
         run: |
           cd /home/usuariohjm/mau-deployment
-          docker compose -f docker-compose-deploy.yml up -d
+          ${{ env.DOCKER_COMPOSE_CMD }} -f docker-compose-deploy.yml up -d
 
       - name: Wait for services to be ready
         run: |
@@ -62,12 +73,12 @@ jobs:
         run: |
           cd /home/usuariohjm/mau-deployment
 
-          if docker compose -f docker-compose-deploy.yml ps | grep -q "Up"; then
+          if ${{ env.DOCKER_COMPOSE_CMD }} -f docker-compose-deploy.yml ps | grep -q "Up"; then
             echo "Containers are running"
-            docker compose -f docker-compose-deploy.yml ps
+            ${{ env.DOCKER_COMPOSE_CMD }} -f docker-compose-deploy.yml ps
           else
             echo "Container failed to start"
-            docker compose -f docker-compose-deploy.yml logs --tail=50
+            ${{ env.DOCKER_COMPOSE_CMD }} -f docker-compose-deploy.yml logs --tail=50
             exit 1
           fi
 
@@ -90,9 +101,9 @@ jobs:
         run: |
           cd /home/usuariohjm/mau-deployment
           echo "=== Backend Logs ==="
-          docker compose -f docker-compose-deploy.yml logs --tail=20 mau-backend
+          ${{ env.DOCKER_COMPOSE_CMD }} -f docker-compose-deploy.yml logs --tail=20 mau-backend
           echo "=== Frontend Logs ==="
-          docker compose -f docker-compose-deploy.yml logs --tail=20 mau-frontend
+          ${{ env.DOCKER_COMPOSE_CMD }} -f docker-compose-deploy.yml logs --tail=20 mau-frontend
         continue-on-error: true
 
       - name: Clean up old Docker images
@@ -113,4 +124,4 @@ jobs:
           echo "Frontend: http://localhost:8002"
           echo "========================================"
           cd /home/usuariohjm/mau-deployment
-          docker compose -f docker-compose-deploy.yml ps
+          ${{ env.DOCKER_COMPOSE_CMD }} -f docker-compose-deploy.yml ps
