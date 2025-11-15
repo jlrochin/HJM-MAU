@@ -101,7 +101,7 @@ DATABASES = {
         'NAME': config('DB_NAME', default='maudb'),
         'USER': config('DB_USER', default='mau_user'),
         'PASSWORD': config('DB_PASSWORD', default='Mau_Pg#7hT4qX1pR6yV8cJ2m'),
-        'HOST': config('DB_HOST', default='postgres-mau'),
+        'HOST': config('DB_HOST', default='mau-db'),
         'PORT': config('DB_PORT', default='5432'),
     }
 }
