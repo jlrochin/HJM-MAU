@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 
 export default function LoginPage() {
   const router = useRouter()
-  const [email, setEmail] = useState('')
+  const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -19,7 +19,7 @@ export default function LoginPage() {
       const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ username, password }),
       })
 
       const data = await response.json()
@@ -52,19 +52,19 @@ export default function LoginPage() {
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="space-y-4">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-neutral-700">
-                Email
+              <label htmlFor="username" className="block text-sm font-medium text-neutral-700">
+                Usuario
               </label>
               <input
-                id="email"
-                name="email"
-                type="email"
-                autoComplete="email"
+                id="username"
+                name="username"
+                type="text"
+                autoComplete="username"
                 required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
                 className="mt-1 block w-full px-3 py-2 border border-neutral-300 rounded-md shadow-sm focus:outline-none focus:ring-neutral-500 focus:border-neutral-500"
-                placeholder="usuario@hospital.com"
+                placeholder="admin"
               />
             </div>
 
@@ -102,8 +102,8 @@ export default function LoginPage() {
 
           <div className="text-xs text-neutral-500 text-center space-y-1">
             <p>Usuarios de prueba:</p>
-            <p>admin@hospital.com / admin123</p>
-            <p>doctor@hospital.com / admin123</p>
+            <p>admin / admin123</p>
+            <p>doctor1 / admin123</p>
           </div>
         </form>
       </div>

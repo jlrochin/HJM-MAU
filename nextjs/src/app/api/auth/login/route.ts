@@ -5,7 +5,7 @@ import prisma from '@/lib/prisma'
 import { createSession } from '@/lib/auth'
 
 const loginSchema = z.object({
-  email: z.string().email('Email inválido'),
+  username: z.string().min(3, 'Usuario inválido'),
   password: z.string().min(6, 'Contraseña debe tener al menos 6 caracteres'),
 })
 
@@ -21,13 +21,14 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const { email, password } = validatedFields.data
+    const { username, password } = validatedFields.data
 
     const user = await prisma.user.findUnique({
-      where: { email },
+      where: { username },
       select: {
         id: true,
         email: true,
+        username: true,
         password: true,
         firstName: true,
         lastName: true,
