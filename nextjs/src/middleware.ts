@@ -13,13 +13,13 @@ export async function middleware(request: NextRequest) {
 
   if (pathname === '/login') {
     if (token) {
-      return NextResponse.redirect(new URL('/dashboard', request.url))
+      return NextResponse.redirect(new URL('/mau/dashboard', request.url))
     }
     return NextResponse.next()
   }
 
   if (isProtectedRoute && !token) {
-    const response = NextResponse.redirect(new URL('/login', request.url))
+    const response = NextResponse.redirect(new URL('/mau/login', request.url))
     response.cookies.delete('session')
     return response
   }

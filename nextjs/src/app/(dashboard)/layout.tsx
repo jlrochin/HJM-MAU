@@ -48,7 +48,7 @@ export default async function DashboardLayout({
             <p className="text-xs text-neutral-600">{session.email}</p>
             <p className="text-xs text-neutral-500">{session.role}</p>
           </div>
-          <form action="/api/auth/logout" method="POST">
+          <form action="/mau/api/auth/logout" method="POST">
             <button
               type="submit"
               className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-neutral-700 hover:bg-neutral-100 transition-colors"

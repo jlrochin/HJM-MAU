@@ -36,7 +36,7 @@ export function PatientForm() {
     setError('')
 
     try {
-      const response = await fetch('/api/patients', {
+      const response = await fetch('/mau/api/patients', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
