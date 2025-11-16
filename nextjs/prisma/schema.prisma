@@ -1,0 +1,174 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  username      String    @unique
+  password      String
+  firstName     String?   @map("first_name")
+  lastName      String?   @map("last_name")
+  role          Role      @default(DOCTOR)
+  isActive      Boolean   @default(true) @map("is_active")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  prescriptions Prescription[]
+  auditLogs     AuditLog[]
+
+  @@map("users")
+}
+
+enum Role {
+  ADMIN
+  DOCTOR
+  ENFERMERA
+  FARMACIA
+}
+
+model Patient {
+  id              String          @id @default(cuid())
+  curp            String?         @unique
+  firstName       String          @map("first_name")
+  lastName        String          @map("last_name")
+  birthDate       DateTime        @map("birth_date")
+  gender          Gender
+  phoneNumber     String?         @map("phone_number")
+  email           String?
+  address         String?
+  bloodType       String?         @map("blood_type")
+  allergies       String?
+  status          PatientStatus   @default(ACTIVE)
+  createdAt       DateTime        @default(now()) @map("created_at")
+  updatedAt       DateTime        @updatedAt @map("updated_at")
+
+  prescriptions   Prescription[]
+  medicalHistory  MedicalHistory[]
+
+  @@map("patients")
+}
+
+enum Gender {
+  M
+  F
+  OTHER
+}
+
+enum PatientStatus {
+  ACTIVE
+  INACTIVE
+  DISCHARGED
+}
+
+model Prescription {
+  id              String              @id @default(cuid())
+  patientId       String              @map("patient_id")
+  patient         Patient             @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  doctorId        String              @map("doctor_id")
+  doctor          User                @relation(fields: [doctorId], references: [id])
+  diagnosis       String
+  cie10Code       String?             @map("cie10_code")
+  observations    String?
+  status          PrescriptionStatus  @default(PENDING)
+  createdAt       DateTime            @default(now()) @map("created_at")
+  updatedAt       DateTime            @updatedAt @map("updated_at")
+
+  medications     PrescriptionMedication[]
+
+  @@map("prescriptions")
+  @@index([patientId])
+  @@index([doctorId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+enum PrescriptionStatus {
+  PENDING
+  DISPENSED
+  CANCELLED
+}
+
+model Medication {
+  id              String    @id @default(cuid())
+  name            String
+  genericName     String?   @map("generic_name")
+  presentation    String?
+  dosage          String?
+  stock           Int       @default(0)
+  minimumStock    Int       @default(10) @map("minimum_stock")
+  price           Float?
+  isActive        Boolean   @default(true) @map("is_active")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  prescriptions   PrescriptionMedication[]
+
+  @@map("medications")
+  @@index([name])
+  @@index([isActive])
+}
+
+model PrescriptionMedication {
+  id              String        @id @default(cuid())
+  prescriptionId  String        @map("prescription_id")
+  prescription    Prescription  @relation(fields: [prescriptionId], references: [id], onDelete: Cascade)
+  medicationId    String        @map("medication_id")
+  medication      Medication    @relation(fields: [medicationId], references: [id])
+  quantity        Int
+  frequency       String
+  duration        String
+  instructions    String?
+
+  @@map("prescription_medications")
+  @@index([prescriptionId])
+  @@index([medicationId])
+}
+
+model CIE10 {
+  id          String   @id @default(cuid())
+  code        String   @unique
+  description String
+  category    String?
+
+  @@map("cie10_catalog")
+  @@index([code])
+  @@index([description])
+}
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  userId      String?  @map("user_id")
+  user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action      String
+  entity      String
+  entityId    String?  @map("entity_id")
+  changes     Json?
+  ipAddress   String?  @map("ip_address")
+  userAgent   String?  @map("user_agent")
+  timestamp   DateTime @default(now())
+
+  @@map("audit_logs")
+  @@index([userId])
+  @@index([entity])
+  @@index([timestamp])
+}
+
+model MedicalHistory {
+  id          String   @id @default(cuid())
+  patientId   String   @map("patient_id")
+  patient     Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  date        DateTime @default(now())
+  diagnosis   String
+  treatment   String?
+  notes       String?
+
+  @@map("medical_history")
+  @@index([patientId])
+  @@index([date])
+}
