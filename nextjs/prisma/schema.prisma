@@ -95,22 +95,29 @@ enum PrescriptionStatus {
 }
 
 model Medication {
-  id              String    @id @default(cuid())
-  name            String
-  genericName     String?   @map("generic_name")
-  presentation    String?
-  dosage          String?
-  stock           Int       @default(0)
-  minimumStock    Int       @default(10) @map("minimum_stock")
-  price           Float?
-  isActive        Boolean   @default(true) @map("is_active")
-  createdAt       DateTime  @default(now()) @map("created_at")
-  updatedAt       DateTime  @updatedAt @map("updated_at")
+  id                  String    @id @default(cuid())
+  code                String?   @unique
+  name                String
+  group               String?
+  presentationType    String?   @map("presentation_type")
+  description         String?   @db.Text
+  indications         String?   @db.Text
+  genericName         String?   @map("generic_name")
+  presentation        String?
+  dosage              String?
+  stock               Int       @default(0)
+  minimumStock        Int       @default(10) @map("minimum_stock")
+  price               Float?
+  isActive            Boolean   @default(true) @map("is_active")
+  createdAt           DateTime  @default(now()) @map("created_at")
+  updatedAt           DateTime  @updatedAt @map("updated_at")
 
   prescriptions   PrescriptionMedication[]
 
   @@map("medications")
+  @@index([code])
   @@index([name])
+  @@index([group])
   @@index([isActive])
 }
 

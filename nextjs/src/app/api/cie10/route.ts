@@ -2,6 +2,13 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getSession } from '@/lib/auth'
 import prisma from '@/lib/prisma'
 
+function normalizeText(text: string): string {
+  return text
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+}
+
 export async function GET(request: NextRequest) {
   try {
     const session = await getSession()
@@ -11,28 +18,53 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url)
-    const search = searchParams.get('search')
+    const search = searchParams.get('search') || ''
+    const category = searchParams.get('category') || ''
+    const page = parseInt(searchParams.get('page') || '1')
+    const limit = parseInt(searchParams.get('limit') || '50')
+    const skip = (page - 1) * limit
 
-    if (!search || search.length < 2) {
-      return NextResponse.json([])
-    }
-
-    const cie10Codes = await prisma.cIE10.findMany({
-      where: {
-        OR: [
-          { code: { contains: search, mode: 'insensitive' } },
-          { description: { contains: search, mode: 'insensitive' } },
-        ],
-      },
-      take: 20,
-      orderBy: { code: 'asc' },
+    let allData = await prisma.cIE10.findMany({
+      orderBy: { code: 'asc' }
     })
 
-    return NextResponse.json(cie10Codes)
+    if (category) {
+      allData = allData.filter(item => item.category === category)
+    }
+
+    if (search) {
+      const normalizedSearch = normalizeText(search)
+      allData = allData.filter(item => {
+        const normalizedCode = normalizeText(item.code)
+        const normalizedDescription = normalizeText(item.description)
+        return (
+          normalizedCode.includes(normalizedSearch) ||
+          normalizedDescription.includes(normalizedSearch)
+        )
+      })
+    }
+
+    const total = allData.length
+    const data = allData.slice(skip, skip + limit)
+
+    const categories = await prisma.cIE10.findMany({
+      where: { category: { not: null } },
+      select: { category: true },
+      distinct: ['category'],
+      orderBy: { category: 'asc' }
+    })
+
+    return NextResponse.json({
+      data,
+      total,
+      page,
+      totalPages: Math.ceil(total / limit),
+      categories: categories.map(c => c.category)
+    })
   } catch (error) {
-    console.error('Error searching CIE-10:', error)
+    console.error('Error fetching CIE-10 data:', error)
     return NextResponse.json(
-      { error: 'Error al buscar códigos CIE-10' },
+      { error: 'Error al obtener datos del catálogo CIE-10' },
       { status: 500 }
     )
   }

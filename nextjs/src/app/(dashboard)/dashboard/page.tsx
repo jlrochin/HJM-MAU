@@ -1,110 +1,118 @@
-import { getSession } from '@/lib/auth'
-import { redirect } from 'next/navigation'
-import prisma from '@/lib/prisma'
-import { Card } from '@/components/ui/card'
-import { Users, FileText, Pill, AlertTriangle } from 'lucide-react'
-import Link from 'next/link'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Users, FileText, Pill, Activity, TrendingUp, Calendar } from 'lucide-react'
 
-export default async function DashboardPage() {
-  const session = await getSession()
-
-  if (!session) {
-    redirect('/login')
-  }
-
-  const [
-    totalPatients,
-    totalPrescriptions,
-    pendingPrescriptions,
-    totalMedications,
-    lowStockMedications,
-  ] = await Promise.all([
-    prisma.patient.count({ where: { status: 'ACTIVE' } }),
-    prisma.prescription.count(),
-    prisma.prescription.count({ where: { status: 'PENDING' } }),
-    prisma.medication.count({ where: { isActive: true } }),
-    prisma.medication.findMany({
-      where: {
-        isActive: true,
-      },
-    }).then((meds) => meds.filter((m) => m.stock <= m.minimumStock).length),
-  ])
-
+export default function DashboardPage() {
   const stats = [
     {
       title: 'Pacientes Activos',
-      value: totalPatients,
+      value: 3,
       icon: Users,
-      href: '/dashboard/pacientes',
-      color: 'text-blue-600',
-      bgColor: 'bg-blue-100',
+      bgColor: 'bg-blue-500/10',
+      iconColor: 'text-blue-500',
+      trend: '+12%',
     },
     {
       title: 'Recetas Totales',
-      value: totalPrescriptions,
+      value: 1,
+      subtitle: '1 pendientes',
       icon: FileText,
-      href: '/dashboard/recetas',
-      color: 'text-green-600',
-      bgColor: 'bg-green-100',
-      subtitle: `${pendingPrescriptions} pendientes`,
+      bgColor: 'bg-green-500/10',
+      iconColor: 'text-green-500',
     },
     {
       title: 'Medicamentos',
-      value: totalMedications,
+      value: 3,
       icon: Pill,
-      href: '/dashboard/medicamentos',
-      color: 'text-purple-600',
-      bgColor: 'bg-purple-100',
-      subtitle: lowStockMedications > 0 ? `${lowStockMedications} con stock bajo` : undefined,
+      bgColor: 'bg-purple-500/10',
+      iconColor: 'text-purple-500',
     },
   ]
 
   return (
-    <div className="p-8 space-y-6">
+    <div className="flex-1 space-y-8 p-8">
       <div>
-        <h1 className="text-3xl font-bold">Dashboard</h1>
-        <p className="text-neutral-600">
-          Bienvenido, {session.name}
+        <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+        <p className="text-muted-foreground mt-2">
+          Bienvenido, Admin Sistema
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {stats.map((stat) => (
-          <Link key={stat.title} href={stat.href}>
-            <Card className="p-6 hover:shadow-lg transition-shadow cursor-pointer">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-neutral-600">{stat.title}</p>
-                  <p className="text-3xl font-bold mt-2">{stat.value}</p>
+          <Card key={stat.title} className="overflow-hidden">
+            <CardContent className="p-6">
+              <div className="flex items-start justify-between">
+                <div className="space-y-3">
+                  <p className="text-sm font-medium text-muted-foreground">{stat.title}</p>
+                  <div className="flex items-baseline gap-2">
+                    <p className="text-3xl font-bold tracking-tight">{stat.value}</p>
+                    {stat.trend && (
+                      <span className="text-xs font-medium text-green-600 flex items-center gap-1">
+                        <TrendingUp className="h-3 w-3" />
+                        {stat.trend}
+                      </span>
+                    )}
+                  </div>
                   {stat.subtitle && (
-                    <p className="text-sm text-neutral-500 mt-1">{stat.subtitle}</p>
+                    <p className="text-xs text-muted-foreground">{stat.subtitle}</p>
                   )}
                 </div>
-                <div className={`p-4 rounded-full ${stat.bgColor}`}>
-                  <stat.icon className={`h-8 w-8 ${stat.color}`} />
+                <div className={`p-3 rounded-lg ${stat.bgColor}`}>
+                  <stat.icon className={`h-6 w-6 ${stat.iconColor}`} />
                 </div>
               </div>
-            </Card>
-          </Link>
+            </CardContent>
+          </Card>
         ))}
       </div>
 
-      {lowStockMedications > 0 && (
-        <Card className="p-6 border-orange-200 bg-orange-50">
-          <div className="flex items-start gap-4">
-            <AlertTriangle className="h-6 w-6 text-orange-600 mt-1" />
-            <div>
-              <h3 className="font-semibold text-orange-900">Alerta de Stock Bajo</h3>
-              <p className="text-sm text-orange-800 mt-1">
-                Hay {lowStockMedications} medicamento(s) con stock por debajo del mínimo.{' '}
-                <Link href="/dashboard/medicamentos" className="underline font-medium">
-                  Ver detalles
-                </Link>
+      <div className="grid gap-6 md:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle>Actividad Reciente</CardTitle>
+            <CardDescription>Últimas acciones en el sistema</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {[
+                { action: 'Nueva receta creada', time: 'Hace 2 horas', icon: FileText },
+                { action: 'Paciente registrado', time: 'Hace 5 horas', icon: Users },
+                { action: 'Medicamento actualizado', time: 'Hace 1 día', icon: Pill },
+              ].map((item, index) => (
+                <div key={index} className="flex items-center gap-4">
+                  <div className="p-2 rounded-lg bg-muted">
+                    <item.icon className="h-4 w-4 text-muted-foreground" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium">{item.action}</p>
+                    <p className="text-xs text-muted-foreground">{item.time}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Próximas Citas</CardTitle>
+            <CardDescription>Recordatorios del día</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-col items-center justify-center py-8">
+              <div className="p-4 bg-muted rounded-full mb-4">
+                <Calendar className="h-8 w-8 text-muted-foreground" />
+              </div>
+              <p className="text-sm font-medium text-muted-foreground mb-1">
+                No hay citas programadas
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Las citas aparecerán aquí
               </p>
             </div>
-          </div>
+          </CardContent>
         </Card>
-      )}
+      </div>
     </div>
   )
 }

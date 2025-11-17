@@ -24,19 +24,16 @@ import {
 import { Search, Filter, Frown, FilterX } from "lucide-react"
 import { Spinner } from "@/components/ui/spinner"
 
-interface Medication {
+interface CIE10Item {
   id: string
-  code: string | null
-  name: string
-  group: string | null
-  presentationType: string | null
-  description: string | null
-  indications: string | null
+  code: string
+  description: string
+  category: string | null
 }
 
-interface MedicationsResponse {
-  data: Medication[]
-  groups: string[]
+interface CIE10Response {
+  data: CIE10Item[]
+  categories: string[]
 }
 
 function normalizeText(text: string): string {
@@ -79,11 +76,11 @@ function TruncatedTextWithTooltip({ text, className = "" }: { text: string, clas
   )
 }
 
-export default function MedicamentosPage() {
+export default function CIE10Page() {
   const [searchTerm, setSearchTerm] = useState("")
-  const [selectedGroup, setSelectedGroup] = useState<string>("")
-  const [allData, setAllData] = useState<Medication[]>([])
-  const [groups, setGroups] = useState<string[]>([])
+  const [selectedCategory, setSelectedCategory] = useState<string>("")
+  const [allData, setAllData] = useState<CIE10Item[]>([])
+  const [categories, setCategories] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 8
@@ -92,18 +89,18 @@ export default function MedicamentosPage() {
     const fetchData = async () => {
       setLoading(true)
       try {
-        const response = await fetch(`/mau/api/medications/all`)
+        const response = await fetch(`/mau/api/cie10/all`)
 
         if (!response.ok) {
           throw new Error('Error al cargar los datos')
         }
 
-        const result: MedicationsResponse = await response.json()
+        const result: CIE10Response = await response.json()
 
         setAllData(result.data)
-        setGroups(result.groups)
+        setCategories(result.categories)
       } catch (error) {
-        console.error('Error al cargar el catálogo de medicamentos:', error)
+        console.error('Error al cargar el catálogo CIE-10:', error)
       } finally {
         setLoading(false)
       }
@@ -115,30 +112,24 @@ export default function MedicamentosPage() {
   const filteredData = useMemo(() => {
     let filtered = allData
 
-    if (selectedGroup) {
-      filtered = filtered.filter(item => {
-        if (!item.group) return false
-        const groups = item.group.split(/\n\n/).map(g => g.trim().replace(/\s+/g, ' '))
-        return groups.includes(selectedGroup)
-      })
+    if (selectedCategory) {
+      filtered = filtered.filter(item => item.category === selectedCategory)
     }
 
     if (searchTerm) {
       const normalizedSearch = normalizeText(searchTerm)
       filtered = filtered.filter(item => {
-        const normalizedCode = normalizeText(item.code || '')
-        const normalizedName = normalizeText(item.name)
-        const normalizedDescription = normalizeText(item.description || '')
+        const normalizedCode = normalizeText(item.code)
+        const normalizedDescription = normalizeText(item.description)
         return (
           normalizedCode.includes(normalizedSearch) ||
-          normalizedName.includes(normalizedSearch) ||
           normalizedDescription.includes(normalizedSearch)
         )
       })
     }
 
     return filtered
-  }, [allData, searchTerm, selectedGroup])
+  }, [allData, searchTerm, selectedCategory])
 
   const totalPages = Math.ceil(filteredData.length / itemsPerPage)
   const startIndex = (currentPage - 1) * itemsPerPage
@@ -146,14 +137,14 @@ export default function MedicamentosPage() {
 
   useEffect(() => {
     setCurrentPage(1)
-  }, [searchTerm, selectedGroup])
+  }, [searchTerm, selectedCategory])
 
   return (
     <div className="flex-1 space-y-6 p-8">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Catálogo de Medicamentos</h1>
+        <h1 className="text-3xl font-bold tracking-tight">Catálogo CIE-10</h1>
         <p className="text-muted-foreground mt-2">
-          Cuadro básico de medicamentos
+          Clasificación Internacional de Enfermedades
         </p>
       </div>
 
@@ -161,40 +152,40 @@ export default function MedicamentosPage() {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Buscar por código, nombre o descripción..."
+            placeholder="Buscar por código o descripción..."
             className="pl-10 h-10"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
         <Select
-          value={selectedGroup || "all"}
-          onValueChange={(value) => setSelectedGroup(value === "all" ? "" : value)}
+          value={selectedCategory || "all"}
+          onValueChange={(value) => setSelectedCategory(value === "all" ? "" : value)}
         >
           <SelectTrigger className="w-[450px] !h-10">
             <div className="flex items-center gap-2 w-full overflow-hidden">
               <Filter className="h-4 w-4 shrink-0" />
               <span className="truncate">
-                <SelectValue placeholder="Todos los grupos" />
+                <SelectValue placeholder="Todas las categorías" />
               </span>
             </div>
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Todos los grupos</SelectItem>
-            {groups.map((group) => (
-              <SelectItem key={group} value={group}>
-                {group}
+            <SelectItem value="all">Todas las categorías</SelectItem>
+            {categories.map((category) => (
+              <SelectItem key={category} value={category}>
+                {category}
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
-        {(searchTerm || selectedGroup) && (
+        {(searchTerm || selectedCategory) && (
           <Button
             variant="outline"
             size="icon"
             onClick={() => {
               setSearchTerm("")
-              setSelectedGroup("")
+              setSelectedCategory("")
             }}
             className="h-10 w-10 shrink-0"
             title="Limpiar filtros"
@@ -206,16 +197,16 @@ export default function MedicamentosPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Medicamentos</CardTitle>
+          <CardTitle>Diagnósticos</CardTitle>
           <CardDescription>
-            {loading ? 'Cargando...' : `${filteredData.length} medicamentos encontrados`}
+            {loading ? 'Cargando...' : `${filteredData.length} códigos encontrados`}
           </CardDescription>
         </CardHeader>
         <CardContent>
           {loading ? (
             <div className="flex flex-col items-center justify-center py-12">
               <Spinner className="size-8 mb-4" />
-              <p className="text-sm text-muted-foreground">Cargando catálogo de medicamentos...</p>
+              <p className="text-sm text-muted-foreground">Cargando catálogo CIE-10...</p>
             </div>
           ) : paginatedData.length > 0 ? (
             <>
@@ -225,27 +216,23 @@ export default function MedicamentosPage() {
                     <thead>
                       <tr className="border-b text-sm text-muted-foreground">
                         <th className="text-left font-medium p-3 w-[10%]">Código</th>
-                        <th className="text-left font-medium p-3 w-[22%]">Nombre</th>
-                        <th className="text-left font-medium p-3 w-[20%]">Presentación</th>
-                        <th className="text-left font-medium p-3 w-[48%]">Descripción</th>
+                        <th className="text-left font-medium p-3 w-[50%]">Descripción</th>
+                        <th className="text-left font-medium p-3 w-[40%]">Capítulo</th>
                       </tr>
                     </thead>
                     <tbody>
                       {paginatedData.map((item) => (
                         <tr key={item.id} className="border-b last:border-0 hover:bg-muted/50">
-                          <td className="p-3 pr-4">
-                            <Badge variant="outline" className="font-mono text-xs">
-                              {item.code || 'N/A'}
+                          <td className="p-3 pr-1">
+                            <Badge variant="outline" className="font-mono">
+                              {item.code}
                             </Badge>
                           </td>
-                          <td className="p-3 pl-4">
-                            <TruncatedTextWithTooltip text={item.name} />
+                          <td className="p-3 pl-1">
+                            <TruncatedTextWithTooltip text={item.description} />
                           </td>
-                          <td className="p-3 text-sm">
-                            <TruncatedTextWithTooltip text={item.presentationType || ''} />
-                          </td>
-                          <td className="p-3 text-sm">
-                            <TruncatedTextWithTooltip text={item.description || ''} />
+                          <td className="p-3 text-sm text-muted-foreground">
+                            <TruncatedTextWithTooltip text={item.category || ""} />
                           </td>
                         </tr>
                       ))}
@@ -311,7 +298,7 @@ export default function MedicamentosPage() {
           ) : (
             <div className="min-h-[500px] flex flex-col items-center justify-center text-muted-foreground">
               <Frown className="h-12 w-12 mb-4 opacity-50" />
-              <p>No se encontraron medicamentos que coincidan con la búsqueda</p>
+              <p>No se encontraron códigos que coincidan con la búsqueda</p>
             </div>
           )}
         </CardContent>
